@@ -8,6 +8,12 @@ using VRC.Udon.Common.Interfaces;
 
 using System.Diagnostics;
 using UnityEngine.Serialization;
+using VRC.Dynamics;
+#if VRC_ENABLE_PLAYER_PERSISTENCE || VRC_ENABLE_INSTANCE_PERSISTENCE
+using VRC.SDK3.Persistence;
+#endif
+using VRC.SDKBase;
+using VRC.SDK3.Data;
 using VRC.Udon.Serialization.OdinSerializer;
 
 namespace UdonSharp
@@ -92,229 +98,128 @@ namespace UdonSharp
         }
 
         /// <summary>
-        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must be public or have a [<see cref="VRC.SDK3.UdonNetworkCalling.NetworkCallableAttribute">NetworkCallable</see>] attribute and have no parameters.
+        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must be public and have no parameters.
         /// <remarks>The method is allowed to return a value, but the return value will not be accessible via this method.
-        /// Methods with an underscore as their first character will not be callable via SendCustomNetworkEvent unless they have a [NetworkCallable] attribute.</remarks>
+        /// Methods with an underscore as their first character will not be callable via SendCustomNetworkEvent, unless they have a [NetworkCallable] attribute.</remarks>
         /// </summary>
-        /// <param name="target">Who to send this event to, valid targets are NetworkEventTarget.All, Owner, Others, and Self</param>
+        /// <param name="target">Whether to send this event to only the owner of the target behaviour's GameObject, or to everyone in the instance</param>
         /// <param name="eventName">Name of the method to call</param>
-        /// <example>
-        ///  <code> // Send a networked event to all players
-        ///  SendCustomNetworkEvent(NetworkEventTarget.All, nameof(MyEvent));
-        ///  </code>
-        /// </example>
         [PublicAPI]
         public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName)
         {
             SendCustomEvent(eventName);
         }
-        
+
         /// <summary>
-        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must have a [<see cref="VRC.SDK3.UdonNetworkCalling.NetworkCallableAttribute">NetworkCallable</see>] attribute.
-        /// <remarks>
-        /// The target method is allowed to return a value, but the return value will not be accessible when calling it via this method.
-        /// </remarks>
+        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must be public and have one parameter.
+        /// <remarks>The method is allowed to return a value, but the return value will not be accessible via this method.
+        /// Methods with an underscore as their first character will not be callable via SendCustomNetworkEvent, unless they have a [NetworkCallable] attribute..</remarks>
         /// </summary>
-        /// <param name="target">Who to send this event to, valid targets are NetworkEventTarget.All, Owner, Others, and Self</param>
+        /// <param name="target">Whether to send this event to only the owner of the target behaviour's GameObject, or to everyone in the instance</param>
         /// <param name="eventName">Name of the method to call</param>
-        /// <example>
-        ///  <code>
-        ///  [NetworkCallable]
-        ///  public void MyEvent(int value)
-        ///  ...
-        ///  // Send a networked event to all players
-        ///  SendCustomNetworkEvent(NetworkEventTarget.All, nameof(MyEvent), 1);
-        ///  </code>
-        /// </example>
         [PublicAPI]
-        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object param0)
+        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object parameter0)
         {
-        #if UNITY_EDITOR
-            if (_udonSharpBackingUdonBehaviour != null && Application.isPlaying)
-                _udonSharpBackingUdonBehaviour.SendCustomNetworkEvent(target, eventName, param0);
-        #endif
+            MethodInfo eventMethod = GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(e => e.Name == eventName && e.GetParameters().Length == 1);
+            eventMethod?.Invoke(this, new object[] { parameter0 });
         }
-        
+
         /// <summary>
-        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must have a [<see cref="VRC.SDK3.UdonNetworkCalling.NetworkCallableAttribute">NetworkCallable</see>] attribute.
-        /// <remarks>
-        /// The target method is allowed to return a value, but the return value will not be accessible when calling it via this method.
-        /// </remarks>
+        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must be public and have two parameters.
+        /// <remarks>The method is allowed to return a value, but the return value will not be accessible via this method.
+        /// Methods with an underscore as their first character will not be callable via SendCustomNetworkEvent, unless they have a [NetworkCallable] attribute..</remarks>
         /// </summary>
-        /// <param name="target">Who to send this event to, valid targets are NetworkEventTarget.All, Owner, Others, and Self</param>
+        /// <param name="target">Whether to send this event to only the owner of the target behaviour's GameObject, or to everyone in the instance</param>
         /// <param name="eventName">Name of the method to call</param>
-        /// <example>
-        ///  <code>
-        ///  [NetworkCallable]
-        ///  public void MyEvent(int value1, int value2)
-        ///  ...
-        ///  // Send a networked event to all players
-        ///  SendCustomNetworkEvent(NetworkEventTarget.All, nameof(MyEvent), 1, 2);
-        ///  </code>
-        /// </example>
         [PublicAPI]
-        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object param0, object param1)
+        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object parameter0, object parameter1)
         {
-        #if UNITY_EDITOR
-            if (_udonSharpBackingUdonBehaviour != null && Application.isPlaying)
-                _udonSharpBackingUdonBehaviour.SendCustomNetworkEvent(target, eventName, param0, param1);
-        #endif
+            MethodInfo eventMethod = GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(e => e.Name == eventName && e.GetParameters().Length == 2);
+            eventMethod?.Invoke(this, new object[] { parameter0, parameter1 });
         }
-        
+
         /// <summary>
-        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must have a [<see cref="VRC.SDK3.UdonNetworkCalling.NetworkCallableAttribute">NetworkCallable</see>] attribute.
-        /// <remarks>
-        /// The target method is allowed to return a value, but the return value will not be accessible when calling it via this method.
-        /// </remarks>
+        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must be public and have three parameters.
+        /// <remarks>The method is allowed to return a value, but the return value will not be accessible via this method.
+        /// Methods with an underscore as their first character will not be callable via SendCustomNetworkEvent, unless they have a [NetworkCallable] attribute..</remarks>
         /// </summary>
-        /// <param name="target">Who to send this event to, valid targets are NetworkEventTarget.All, Owner, Others, and Self</param>
+        /// <param name="target">Whether to send this event to only the owner of the target behaviour's GameObject, or to everyone in the instance</param>
         /// <param name="eventName">Name of the method to call</param>
-        /// <example>
-        ///  <code>
-        ///  [NetworkCallable]
-        ///  public void MyEvent(int value1, int value2, int value3)
-        ///  ...
-        ///  // Send a networked event to all players
-        ///  SendCustomNetworkEvent(NetworkEventTarget.All, nameof(MyEvent), 1, 2, 3);
-        ///  </code>
-        /// </example>
         [PublicAPI]
-        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object param0, object param1, object param2)
+        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object parameter0, object parameter1, object parameter2)
         {
-        #if UNITY_EDITOR
-            if (_udonSharpBackingUdonBehaviour != null && Application.isPlaying)
-                _udonSharpBackingUdonBehaviour.SendCustomNetworkEvent(target, eventName, param0, param1, param2);
-        #endif
+            MethodInfo eventMethod = GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(e => e.Name == eventName && e.GetParameters().Length == 3);
+            eventMethod?.Invoke(this, new object[] { parameter0, parameter1, parameter2 });
         }
-        
+
         /// <summary>
-        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must have a [<see cref="VRC.SDK3.UdonNetworkCalling.NetworkCallableAttribute">NetworkCallable</see>] attribute.
-        /// <remarks>
-        /// The target method is allowed to return a value, but the return value will not be accessible when calling it via this method.
-        /// </remarks>
+        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must be public and have four parameters.
+        /// <remarks>The method is allowed to return a value, but the return value will not be accessible via this method.
+        /// Methods with an underscore as their first character will not be callable via SendCustomNetworkEvent, unless they have a [NetworkCallable] attribute..</remarks>
         /// </summary>
-        /// <param name="target">Who to send this event to, valid targets are NetworkEventTarget.All, Owner, Others, and Self</param>
+        /// <param name="target">Whether to send this event to only the owner of the target behaviour's GameObject, or to everyone in the instance</param>
         /// <param name="eventName">Name of the method to call</param>
-        /// <example>
-        ///  <code>
-        ///  [NetworkCallable]
-        ///  public void MyEvent(int value1, int value2, int value3, int value4)
-        ///  ...
-        ///  // Send a networked event to all players
-        ///  SendCustomNetworkEvent(NetworkEventTarget.All, nameof(MyEvent), 1, 2, 3, 4);
-        ///  </code>
-        /// </example>
         [PublicAPI]
-        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object param0, object param1, object param2, object param3)
+        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object parameter0, object parameter1, object parameter2, object parameter3)
         {
-        #if UNITY_EDITOR
-            if (_udonSharpBackingUdonBehaviour != null && Application.isPlaying)
-                _udonSharpBackingUdonBehaviour.SendCustomNetworkEvent(target, eventName, param0, param1, param2, param3);
-        #endif
+            MethodInfo eventMethod = GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(e => e.Name == eventName && e.GetParameters().Length == 4);
+            eventMethod?.Invoke(this, new object[] { parameter0, parameter1, parameter2, parameter3 });
         }
-        
+
         /// <summary>
-        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must have a [<see cref="VRC.SDK3.UdonNetworkCalling.NetworkCallableAttribute">NetworkCallable</see>] attribute.
-        /// <remarks>
-        /// The target method is allowed to return a value, but the return value will not be accessible when calling it via this method.
-        /// </remarks>
+        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must be public and have five parameters.
+        /// <remarks>The method is allowed to return a value, but the return value will not be accessible via this method.
+        /// Methods with an underscore as their first character will not be callable via SendCustomNetworkEvent, unless they have a [NetworkCallable] attribute..</remarks>
         /// </summary>
-        /// <param name="target">Who to send this event to, valid targets are NetworkEventTarget.All, Owner, Others, and Self</param>
+        /// <param name="target">Whether to send this event to only the owner of the target behaviour's GameObject, or to everyone in the instance</param>
         /// <param name="eventName">Name of the method to call</param>
-        /// <example>
-        ///  <code>
-        ///  [NetworkCallable]
-        ///  public void MyEvent(int value1, int value2, int value3, int value4, int value5)
-        ///  ...
-        ///  // Send a networked event to all players
-        ///  SendCustomNetworkEvent(NetworkEventTarget.All, nameof(MyEvent), 1, 2, 3, 4, 5);
-        ///  </code>
-        /// </example>
         [PublicAPI]
-        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object param0, object param1, object param2, object param3, object param4)
+        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object parameter0, object parameter1, object parameter2, object parameter3, object parameter4)
         {
-        #if UNITY_EDITOR
-            if (_udonSharpBackingUdonBehaviour != null && Application.isPlaying)
-                _udonSharpBackingUdonBehaviour.SendCustomNetworkEvent(target, eventName, param0, param1, param2, param3, param4);
-        #endif
+            MethodInfo eventMethod = GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(e => e.Name == eventName && e.GetParameters().Length == 5);
+            eventMethod?.Invoke(this, new object[] { parameter0, parameter1, parameter2, parameter3, parameter4 });
         }
-        
+
         /// <summary>
-        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must have a [<see cref="VRC.SDK3.UdonNetworkCalling.NetworkCallableAttribute">NetworkCallable</see>] attribute.
-        /// <remarks>
-        /// The target method is allowed to return a value, but the return value will not be accessible when calling it via this method.
-        /// </remarks>
+        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must be public and have five parameters.
+        /// <remarks>The method is allowed to return a value, but the return value will not be accessible via this method.
+        /// Methods with an underscore as their first character will not be callable via SendCustomNetworkEvent, unless they have a [NetworkCallable] attribute..</remarks>
         /// </summary>
-        /// <param name="target">Who to send this event to, valid targets are NetworkEventTarget.All, Owner, Others, and Self</param>
+        /// <param name="target">Whether to send this event to only the owner of the target behaviour's GameObject, or to everyone in the instance</param>
         /// <param name="eventName">Name of the method to call</param>
-        /// <example>
-        ///  <code>
-        ///  [NetworkCallable]
-        ///  public void MyEvent(int value1, int value2, int value3, int value4, int value5, int value6)
-        ///  ...
-        ///  // Send a networked event to all players
-        ///  SendCustomNetworkEvent(NetworkEventTarget.All, nameof(MyEvent), 1, 2, 3, 4, 5, 6);
-        ///  </code>
-        /// </example>
         [PublicAPI]
-        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object param0, object param1, object param2, object param3, object param4, object param5)
+        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object parameter0, object parameter1, object parameter2, object parameter3, object parameter4, object parameter5)
         {
-        #if UNITY_EDITOR
-            if (_udonSharpBackingUdonBehaviour != null && Application.isPlaying)
-                _udonSharpBackingUdonBehaviour.SendCustomNetworkEvent(target, eventName, param0, param1, param2, param3, param4, param5);
-        #endif
+            MethodInfo eventMethod = GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(e => e.Name == eventName && e.GetParameters().Length == 6);
+            eventMethod?.Invoke(this, new object[] { parameter0, parameter1, parameter2, parameter3, parameter4, parameter5 });
         }
-        
+
         /// <summary>
-        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must have a [<see cref="VRC.SDK3.UdonNetworkCalling.NetworkCallableAttribute">NetworkCallable</see>] attribute.
-        /// <remarks>
-        /// The target method is allowed to return a value, but the return value will not be accessible when calling it via this method.
-        /// </remarks>
+        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must be public and have five parameters.
+        /// <remarks>The method is allowed to return a value, but the return value will not be accessible via this method.
+        /// Methods with an underscore as their first character will not be callable via SendCustomNetworkEvent, unless they have a [NetworkCallable] attribute..</remarks>
         /// </summary>
-        /// <param name="target">Who to send this event to, valid targets are NetworkEventTarget.All, Owner, Others, and Self</param>
+        /// <param name="target">Whether to send this event to only the owner of the target behaviour's GameObject, or to everyone in the instance</param>
         /// <param name="eventName">Name of the method to call</param>
-        /// <example>
-        ///  <code>
-        ///  [NetworkCallable]
-        ///  public void MyEvent(int value1, int value2, int value3, int value4, int value5, int value6, int value7)
-        ///  ...
-        ///  // Send a networked event to all players
-        ///  SendCustomNetworkEvent(NetworkEventTarget.All, nameof(MyEvent), 1, 2, 3, 4, 5, 6, 7);
-        ///  </code>
-        /// </example>
         [PublicAPI]
-        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object param0, object param1, object param2, object param3, object param4, object param5, object param6)
+        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object parameter0, object parameter1, object parameter2, object parameter3, object parameter4, object parameter5, object parameter6)
         {
-        #if UNITY_EDITOR
-            if (_udonSharpBackingUdonBehaviour != null && Application.isPlaying)
-                _udonSharpBackingUdonBehaviour.SendCustomNetworkEvent(target, eventName, param0, param1, param2, param3, param4, param5, param6);
-        #endif
+            MethodInfo eventMethod = GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(e => e.Name == eventName && e.GetParameters().Length == 7);
+            eventMethod?.Invoke(this, new object[] { parameter0, parameter1, parameter2, parameter3, parameter4, parameter5, parameter6 });
         }
-        
+
         /// <summary>
-        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must have a [<see cref="VRC.SDK3.UdonNetworkCalling.NetworkCallableAttribute">NetworkCallable</see>] attribute.
-        /// <remarks>
-        /// The target method is allowed to return a value, but the return value will not be accessible when calling it via this method.
-        /// </remarks>
+        /// Sends a networked call to the method with <paramref name="eventName"/> on the target UdonSharpBehaviour. The target method must be public and have five parameters.
+        /// <remarks>The method is allowed to return a value, but the return value will not be accessible via this method.
+        /// Methods with an underscore as their first character will not be callable via SendCustomNetworkEvent, unless they have a [NetworkCallable] attribute..</remarks>
         /// </summary>
-        /// <param name="target">Who to send this event to, valid targets are NetworkEventTarget.All, Owner, Others, and Self</param>
+        /// <param name="target">Whether to send this event to only the owner of the target behaviour's GameObject, or to everyone in the instance</param>
         /// <param name="eventName">Name of the method to call</param>
-        /// <example>
-        ///  <code>
-        ///  [NetworkCallable]
-        ///  public void MyEvent(int value1, int value2, int value3, int value4, int value5, int value6, int value7, int value8)
-        ///  ...
-        ///  // Send a networked event to all players
-        ///  SendCustomNetworkEvent(NetworkEventTarget.All, nameof(MyEvent), 1, 2, 3, 4, 5, 6, 7, 8);
-        ///  </code>
-        /// </example>
         [PublicAPI]
-        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object param0, object param1, object param2, object param3, object param4, object param5, object param6, object param7)
+        public void SendCustomNetworkEvent(NetworkEventTarget target, string eventName, object parameter0, object parameter1, object parameter2, object parameter3, object parameter4, object parameter5, object parameter6, object parameter7)
         {
-        #if UNITY_EDITOR
-            if (_udonSharpBackingUdonBehaviour != null && Application.isPlaying)
-                _udonSharpBackingUdonBehaviour.SendCustomNetworkEvent(target, eventName, param0, param1, param2, param3, param4, param5, param6, param7);
-        #endif
+            MethodInfo eventMethod = GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(e => e.Name == eventName && e.GetParameters().Length == 8);
+            eventMethod?.Invoke(this, new object[] { parameter0, parameter1, parameter2, parameter3, parameter4, parameter5, parameter6, parameter7 });
         }
 
         /// <summary>
@@ -324,13 +229,7 @@ namespace UdonSharp
         /// <param name="delaySeconds"></param>
         /// <param name="eventTiming"></param>
         [PublicAPI] 
-        public void SendCustomEventDelayedSeconds(string eventName, float delaySeconds, VRC.Udon.Common.Enums.EventTiming eventTiming = VRC.Udon.Common.Enums.EventTiming.Update)
-        {
-        #if UNITY_EDITOR
-            if (_udonSharpBackingUdonBehaviour != null && Application.isPlaying)
-                VRC.Udon.UdonManager.Instance.ScheduleDelayedEvent(_udonSharpBackingUdonBehaviour, eventName, delaySeconds, eventTiming);
-        #endif
-        }
+        public void SendCustomEventDelayedSeconds(string eventName, float delaySeconds, VRC.Udon.Common.Enums.EventTiming eventTiming = VRC.Udon.Common.Enums.EventTiming.Update) { }
 
         /// <summary>
         /// Executes target event after delayFrames have passed. If 0 frames is specified, will execute the following frame. In effect 0 frame delay and 1 fame delay are the same on this method.
@@ -339,13 +238,7 @@ namespace UdonSharp
         /// <param name="delayFrames"></param>
         /// <param name="eventTiming"></param>
         [PublicAPI] 
-        public void SendCustomEventDelayedFrames(string eventName, int delayFrames, VRC.Udon.Common.Enums.EventTiming eventTiming = VRC.Udon.Common.Enums.EventTiming.Update)
-        {
-        #if UNITY_EDITOR
-            if (_udonSharpBackingUdonBehaviour != null && Application.isPlaying)
-                VRC.Udon.UdonManager.Instance.ScheduleDelayedEvent(_udonSharpBackingUdonBehaviour, eventName, delayFrames, eventTiming);
-        #endif
-        }
+        public void SendCustomEventDelayedFrames(string eventName, int delayFrames, VRC.Udon.Common.Enums.EventTiming eventTiming = VRC.Udon.Common.Enums.EventTiming.Update) { }
 
         /// <summary>
         /// Disables Interact events on this UdonBehaviour and disables the interact outline on the object this is attached to
@@ -440,10 +333,10 @@ namespace UdonSharp
         [PublicAPI] public virtual void OnPreSerialization() { }
         [PublicAPI] public virtual void OnDeserialization() { }
         [PublicAPI] public virtual void OnDeserialization(VRC.Udon.Common.DeserializationResult result) { }
-    #if UNITY_2022_3_OR_NEWER
+#if VRC_ENABLE_PLAYER_PERSISTENCE
         [PublicAPI] public virtual void OnPlayerDataUpdated(VRC.SDKBase.VRCPlayerApi player, VRC.SDK3.Persistence.PlayerData.Info[] infos) { }
+#endif
         [PublicAPI] public virtual void OnPlayerRestored(VRC.SDKBase.VRCPlayerApi player) { }
-    #endif
         [PublicAPI] public virtual void OnPlayerTriggerEnter(VRC.SDKBase.VRCPlayerApi player) { }
         [PublicAPI] public virtual void OnPlayerTriggerExit(VRC.SDKBase.VRCPlayerApi player) { }
         [PublicAPI] public virtual void OnPlayerTriggerStay(VRC.SDKBase.VRCPlayerApi player) { }
@@ -458,20 +351,21 @@ namespace UdonSharp
         [PublicAPI] public virtual void OnStringLoadSuccess(VRC.SDK3.StringLoading.IVRCStringDownload result) { }
         [PublicAPI] public virtual void OnStringLoadError(VRC.SDK3.StringLoading.IVRCStringDownload result) { }
         [PublicAPI] public virtual void OnPlayerSuspendChanged(VRC.SDKBase.VRCPlayerApi player) { }
-
+        [PublicAPI] public virtual void OnDroneTriggerEnter(VRC.SDKBase.VRCDroneApi drone) { }
+        [PublicAPI] public virtual void OnDroneTriggerExit(VRC.SDKBase.VRCDroneApi drone) { }
+        [PublicAPI] public virtual void OnDroneTriggerStay(VRC.SDKBase.VRCDroneApi drone) { }
         [PublicAPI] public virtual void OnPostSerialization(VRC.Udon.Common.SerializationResult result) { }
         [PublicAPI] public virtual bool OnOwnershipRequest(VRC.SDKBase.VRCPlayerApi requestingPlayer, VRC.SDKBase.VRCPlayerApi requestedOwner) => true;
 		
         #region Creator Economy
-    #if UNITY_2022_3_OR_NEWER
         [PublicAPI] public virtual void OnPurchaseConfirmed(VRC.Economy.IProduct product, VRC.SDKBase.VRCPlayerApi player, bool purchasedNow) { }
+        [PublicAPI] public virtual void OnPurchaseConfirmedMultiple(VRC.Economy.IProduct product, VRC.SDKBase.VRCPlayerApi player, bool purchasedNow, int quantity) { }
         [PublicAPI] public virtual void OnPurchaseExpired(VRC.Economy.IProduct product, VRC.SDKBase.VRCPlayerApi player) { }
         [PublicAPI] public virtual void OnPurchasesLoaded(VRC.Economy.IProduct[] products, VRC.SDKBase.VRCPlayerApi player) { }
         [PublicAPI] public virtual void OnProductEvent(VRC.Economy.IProduct product, VRC.SDKBase.VRCPlayerApi player) { }
         [PublicAPI] public virtual void OnListPurchases(VRC.Economy.IProduct[] products, VRC.SDKBase.VRCPlayerApi player) { }
         [PublicAPI] public virtual void OnListAvailableProducts(VRC.Economy.IProduct[] products) { }
         [PublicAPI] public virtual void OnListProductOwners(VRC.Economy.IProduct product, string[] owners) { }
-    #endif
         #endregion
 
         [PublicAPI] public virtual void MidiNoteOn(int channel, int number, int velocity) { }
@@ -485,13 +379,30 @@ namespace UdonSharp
         [PublicAPI] public virtual void InputMoveHorizontal(float value, VRC.Udon.Common.UdonInputEventArgs args) { }
         [PublicAPI] public virtual void InputMoveVertical(float value, VRC.Udon.Common.UdonInputEventArgs args) { }
         [PublicAPI] public virtual void InputLookHorizontal(float value, VRC.Udon.Common.UdonInputEventArgs args) { }
-        [PublicAPI] public virtual void InputLookVertical(float value, VRC.Udon.Common.UdonInputEventArgs args) { }                 
+        [PublicAPI] public virtual void InputLookVertical(float value, VRC.Udon.Common.UdonInputEventArgs args) { }
         [PublicAPI] public virtual void OnInputMethodChanged(VRC.SDKBase.VRCInputMethod inputMethod) { }
         [PublicAPI] public virtual void OnLanguageChanged(string language) { }
         [PublicAPI] public virtual void OnAsyncGpuReadbackComplete(VRC.SDK3.Rendering.VRCAsyncGPUReadbackRequest request) { }
-    #if UNITY_2022_3_OR_NEWER
+        [PublicAPI] public virtual void OnVRCCameraSettingsChanged(VRC.SDK3.Rendering.VRCCameraSettings cameraSettings) { }
+        [PublicAPI] public virtual void OnVRCQualitySettingsChanged() { }
         [PublicAPI] public virtual void OnScreenUpdate(VRC.SDK3.Platform.ScreenUpdateData data) {}
-    #endif
+        [PublicAPI] public virtual void OnVRCPlusMassGift(VRC.SDKBase.VRCPlayerApi gifter, int numGifts) { }
+        [PublicAPI] public virtual void OnPhysBoneGrabbed(PhysBoneGrabbedInfo physBoneInfo) { }
+        [PublicAPI] public virtual void OnPhysBoneReleased(PhysBoneReleasedInfo physBoneInfo) { }
+        [PublicAPI] public virtual void OnPhysBonePosed(PhysBonePosedInfo physBoneInfo) { }
+        [PublicAPI] public virtual void OnPhysBoneUnPosed(PhysBoneUnPosedInfo physBoneInfo) { }
+        [PublicAPI] public virtual void OnContactEnter(ContactEnterInfo contactInfo) { }
+        [PublicAPI] public virtual void OnContactExit(ContactExitInfo contactInfo) { }
+
+#if VRC_ENABLE_PLAYER_PERSISTENCE || VRC_ENABLE_INSTANCE_PERSISTENCE
+        [PublicAPI] public virtual void OnPersistenceUsageUpdated() {}
+#endif
+#if VRC_ENABLE_PLAYER_PERSISTENCE
+        [PublicAPI] public virtual void OnPlayerDataStorageExceeded(VRCPlayerApi player) {}
+        [PublicAPI] public virtual void OnPlayerDataStorageWarning(VRCPlayerApi player) {}
+        [PublicAPI] public virtual void OnPlayerObjectStorageExceeded(VRCPlayerApi player) {}
+        [PublicAPI] public virtual void OnPlayerObjectStorageWarning(VRCPlayerApi player) {}
+#endif
 
         [Obsolete("The OnStationEntered() event is deprecated use the OnStationEntered(VRCPlayerApi player) event instead", true)]
         public virtual void OnStationEntered() { }
