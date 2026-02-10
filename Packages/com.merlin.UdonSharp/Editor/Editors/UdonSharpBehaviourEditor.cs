@@ -472,8 +472,6 @@ namespace UdonSharpEditor
     internal class UdonSharpBehaviourOverrideEditor : Editor
     {
         private Editor _userEditor;
-        private double _lastUdonToProxySyncTime;
-        private const double SyncThrottleIntervalSeconds = 1.0;
 
         private void OnEnable()
         {
@@ -743,13 +741,8 @@ namespace UdonSharpEditor
                 {
                     if (!skipSerialize && EditorApplication.isPlaying) // We only need this copy in play mode since U# now goes off the behaviour data for setting up UdonBehaviours
                     {
-                        double now = EditorApplication.timeSinceStartup;
-                        if (now - _lastUdonToProxySyncTime >= SyncThrottleIntervalSeconds)
-                        {
-                            _lastUdonToProxySyncTime = now;
-                            foreach (Object targetProxy in targets)
-                                UdonSharpEditorUtility.CopyUdonToProxy((UdonSharpBehaviour)targetProxy, ProxySerializationPolicy.All);
-                        }
+                        foreach (Object targetProxy in targets)
+                            UdonSharpEditorUtility.CopyUdonToProxy((UdonSharpBehaviour)targetProxy, ProxySerializationPolicy.All);
                     }
                 
                     if (_userEditor)
@@ -757,7 +750,7 @@ namespace UdonSharpEditor
 
                     imguiAction();
 
-                    if (!skipSerialize && EditorApplication.isPlaying && GUI.changed)
+                    if (!skipSerialize && EditorApplication.isPlaying)
                     {
                         foreach (Object targetProxy in targets)
                             UdonSharpEditorUtility.CopyProxyToUdon((UdonSharpBehaviour)targetProxy, ProxySerializationPolicy.All);
