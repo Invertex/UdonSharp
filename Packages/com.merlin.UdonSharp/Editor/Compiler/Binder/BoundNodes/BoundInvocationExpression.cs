@@ -442,7 +442,7 @@ namespace UdonSharp.Compiler.Binder
                 
                 Type forwardedType = UdonSharpUtils.GetForwardedType(sourceType);
                 
-                if (forwardedType == null)
+                if (forwardedType == sourceType)
                 {
                     createdInvocation = null;
                     return false;
@@ -486,7 +486,7 @@ namespace UdonSharp.Compiler.Binder
                 
                 Type forwardedType = UdonSharpUtils.GetForwardedType(sourceType);
                 
-                if (forwardedType == null)
+                if (forwardedType == sourceType)
                 {
                     createdInvocation = null;
                     return false;
@@ -578,7 +578,7 @@ namespace UdonSharp.Compiler.Binder
                 
                 Type forwardedType = UdonSharpUtils.GetForwardedType(sourceType);
                 
-                if (forwardedType == null)
+                if (forwardedType == sourceType)
                 {
                     createdInvocation = null;
                     return false;
