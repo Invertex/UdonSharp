@@ -16,6 +16,7 @@ using VRC.SDKBase;
 using VRC.SDK3.Data;
 using VRC.Udon.Serialization.OdinSerializer;
 
+
 namespace UdonSharp
 {
     public abstract class UdonSharpBehaviour : MonoBehaviour, ISerializationCallbackReceiver, ISupportsPrefabSerialization
